@@ -1,0 +1,101 @@
+"""
+
+	CMSC 25025 / STAT 37601 
+	Machine Learning and Large Scale Data Analysis
+	LSD Project 4 
+	Programming Hints
+
+	Charles Cary @ 2013.05.23
+
+"""
+
+New Cluster Types
+=================
+
+For this project, we have added two new cluster types: 1 high CPU node and 10 node High CPU.  The machines that compose these clusters have less memory than the normal clusters, but more CPU.  Each high CPU machine has 1.7 GB of RAM and two cores, rather than 1. Each of these cores is clocked about 25% faster.  The 1 high CPU node type consists of one machine with 2 engines running on it (in order to take advantage of the two cores). The 10 node High CPU cluster has 10 nodes, with 18 engines in total.
+
+Program these cluster types as you always have programmed using IPython; nothing is different about them except that they have more engines.
+
+You should do your development on 1 high CPU node or 1 medium node clusters.  You should ONLY use the 10 node High CPU clusters when you are generating your final results.  
+
+Data Storage
+============
+
+Since this dataset is larger than the others, it is important to understand where data is stored in, and how it moves through a cluster.  All datasets initially reside in S3.  When the DAL needs them, it downloads the datasets from S3 and writes the data to a local hardrive, /mnt.  This is why the first time you use a dataset it is slower; because it needs to download and decompress the data.  
+
+When you write output files from a program, you should write to /mnt.  /mnt is relatively large and fast.  
+
+/mnt IS NOT the NFS server.  The NFS server is where your code resides, not your data.  Your /home/<username> directory is mounted via NFS.  
+
+Never write the output of a program or a dataset to NFS.  This is slow for you and slows downs the programs of your fellow students.  
+
+Do not try to load the entire lightcurves dataset into memory. 
+
+Parallelism Advice
+==================
+
+You should (must) parallelize your code for this project.   This is necessary due to the time it takes to process the dataset; on the entire dataset, our solution takes about 7 hours to run on the 10 node High CPU cluster.
+
+When you parallize code, do not just think about the CPU, also think about network!  Hint: spreading downloading across multiple machines can increase speed.  
+
+The following are three reasonable ways to parallize the code:
+
+* Perform repeated rounds where the master scatters some portion of the NAMES of the subsets.  In each round, each engine uses the subset name it receives to download and process the subset.  The engines then checkpoint their results.  
+
+* Perform one round for each subset, where the master downloads and then scatters a subset.  The engines then process some portion of the subset's samples and pass the result back to the master.  The master then checkpoints the result.  
+
+* Scatter the names of all the subsets and then process a portion of the subsets on each engine.  Each engine processes a subset and then checkpoints the result.  
+
+In all three cases, the use of checkpointing is encouraged (heavily).  This is because nodes will crash when they run for long periods of time at full utilization.  
+
+You should consider how you should check the progress of your program.  
+
+Checkpoint
+==========
+
+Remember the checkpointing module from the tutorial?  It will be very helpful for this project.  Intermittently checkpointing results back to s3 prevents you from having to start again when a cluster crashes.
+
+Example usage for checkpoint is contained in the lsdacluster notebook that came with your home directory.   See the section titled: Advanced DAL - Checkpointing, Data Flow and Custom Datasets.
+
+LightCurves DAL
+===============
+
+Sample usage for the lightcurves DAL:
+
+#UPDATED
+
+import DAL
+lightcurves = DAL.create('lightcurves')
+s = lightcurves.subsets()
+
+dat = []
+for i in lightcurves.iter(s[0]):
+    name = i['id']
+    lc = i['data']
+    time = lc[:len(lc)/2]  #modified - first half time
+    flux = lc[len(lc)/2:] #modified - first half flux
+    dat.append( (name, time, flux) ) #modified
+
+
+Some of the light curves include NaN values in their data.  You should discard these entries.  
+
+There is no metadata function for the lightcurves.  
+		
+Extra Hints
+===========
+
+* To distribute a function, or a global variable, to the engines, so that you can call it from code running on the engines:
+
+def f(a)
+    return a
+dview['f'] = f
+
+* You could specify the datatype for a numpy array, e.g. dtype=float32. This is valuable because numpy is significantly faster when it is using typed data because it avoids dynamic checking.  
+
+* The engines may complain that numpy's float32 don't exist. Trying adding: from numpy import float32
+
+* To see the health of your nodes, you should ssh into them and run top.  
+
+* Do not use too many bandwidths for cross validation.
+
+Have fun! :)
