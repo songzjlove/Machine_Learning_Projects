@@ -2,11 +2,11 @@
 # <nbformat>3.0</nbformat>
 
 # <codecell>
-
+##########################
 # STAT 376
 # project 3 
 # Zhengjian Song
-
+##########################
 # import package
 import DAL
 import time

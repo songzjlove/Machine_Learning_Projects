@@ -2,8 +2,10 @@
 # <nbformat>3.0</nbformat>
 
 # <codecell>
-
+###########################
 ## Lsd project 4 part 1
+## Zhengjian Song
+###########################
 ## please check the analysis in the markdown below 
 import DAL
 import numpy as np

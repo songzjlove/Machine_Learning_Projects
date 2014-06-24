@@ -1,8 +1,9 @@
+################################
 ## Project 1 problem 2 + 3
 ## Stat 376
 ## Zhengjian Son
-# Problem 2
-
+## Problem 2
+################################
 #verify cluster connection and connect to the database
 from IPython.parallel import Client
 import DAL

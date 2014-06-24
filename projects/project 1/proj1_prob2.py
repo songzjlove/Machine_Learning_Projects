@@ -1,7 +1,8 @@
+##############################
 ## Project 1 problem 2 + 3
 ## Stat 376
 ## Zhengjian Song
-#####################################################################################################################
+##############################
 ## problem 2
 ## Bible: If you can handle the program in 5 nodes cluster, never use the bullshit 10 nodes one!!!
 #verify cluster connection
